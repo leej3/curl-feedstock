@@ -100,6 +100,7 @@ outputs:
       run:
         - {{ pin_subpackage('libcurl', exact=True) }}
         - libssh2
+        - krb5
     test:
       commands:
         # curl help commands on Windows have non-zero status codes.  Need other test.

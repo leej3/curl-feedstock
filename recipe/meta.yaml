@@ -9,12 +9,23 @@ source:
   sha256: 9d52a4d80554f9b0d460ea2be5d7be99897a1a9f681ffafe739169afd6b4f224
 
 build:
+{% if bootstrapping == 'yes' %}
+  # Please increment by two
+  number: 0
+  string: h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}_bootstrapping
+{% else %}
+  # Keep above the number of the _bootstrapping package
   number: 8
+{% endif %}
+  script_env:
+    - BOOTSTRAPPING={{ bootstrapping }}
 
 requirements:
   build:
-    - libtool  # [unix]
     - {{ compiler('c') }}
+    - {{ cdt('zlib-devel') }}
+{% if bootstrapping != 'yes' %}
+    - libtool  # [unix]
     - make             # [unix]
     # perl is required to run the tests on UNIX.
     - perl  # [unix]
@@ -26,13 +37,14 @@ requirements:
     - openssl        # [unix]
     - libnghttp2     # [unix]
     - zlib
-
+{% endif %}
 
 outputs:
   - name: libcurl
     requirements:
       build:
         - {{ compiler('c') }}
+{% if bootstrapping != 'yes' %}
       host:
         - openssl   # [unix]
         - libnghttp2   # [unix]
@@ -45,6 +57,7 @@ outputs:
     build:
       run_exports:
         - {{ pin_subpackage('libcurl') }}
+{% endif %}
     files:
       - include/curl             # [unix]
       - lib/libcurl.so*          # [linux]
@@ -57,14 +70,17 @@ outputs:
       - Library/lib/libcurl.exp  # [win]
     test:
       commands:
+{% if bootstrapping != 'yes' %}
         - curl-config --features       # [not win]
         - curl-config --protocols      # [not win]
+{% endif %}
         - test -f ${PREFIX}/lib/libcurl${SHLIB_EXT}  # [not win]
         - test ! -f ${PREFIX}/lib/libcurl.a          # [not win]
         - if exist %LIBRARY_BIN%\curl.exe exit 1     # [win]
         - if exist %LIBRARY_LIB%\libcurl_a.lib exit 1     # [win]
         - if not exist %LIBRARY_BIN%\libcurl.dll exit 1   # [win]
 
+{% if bootstrapping != 'yes' %}
   - name: libcurl-static
     requirements:
       build:
@@ -84,6 +100,7 @@ outputs:
       commands:
         - test -f $PREFIX/lib/libcurl.a  # [not win]
         - if not exist %LIBRARY_LIB%\libcurl_a.lib exit 1  # [win]
+{% endif %}
 
   - name: curl
     files:
@@ -92,6 +109,7 @@ outputs:
     requirements:
       build:
         - {{ compiler('c') }}
+{% if bootstrapping != 'yes' %}
       host:
         - {{ pin_subpackage('libcurl', exact=True) }}
         - zlib
@@ -101,6 +119,7 @@ outputs:
         - {{ pin_subpackage('libcurl', exact=True) }}
         - libssh2
         - krb5
+{% endif %}
     test:
       commands:
         # curl help commands on Windows have non-zero status codes.  Need other test.

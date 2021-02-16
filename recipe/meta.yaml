@@ -23,7 +23,6 @@ build:
 requirements:
   build:
     - {{ compiler('c') }}
-    - {{ cdt('zlib-devel') }}
 {% if bootstrapping != 'yes' %}
     - libtool  # [unix]
     - make             # [unix]
@@ -102,6 +101,7 @@ outputs:
         - if not exist %LIBRARY_LIB%\libcurl_a.lib exit 1  # [win]
 {% endif %}
 
+{% if bootstrapping != 'yes' %}
   - name: curl
     files:
       - bin/curl               # [unix]
@@ -109,7 +109,6 @@ outputs:
     requirements:
       build:
         - {{ compiler('c') }}
-{% if bootstrapping != 'yes' %}
       host:
         - {{ pin_subpackage('libcurl', exact=True) }}
         - zlib
@@ -119,7 +118,6 @@ outputs:
         - {{ pin_subpackage('libcurl', exact=True) }}
         - libssh2
         - krb5
-{% endif %}
     test:
       commands:
         # curl help commands on Windows have non-zero status codes.  Need other test.
@@ -127,6 +125,7 @@ outputs:
         # Try downloading something from https to make sure the certs are used correctly.
         - curl https://raw.githubusercontent.com/conda-forge/curl-feedstock/master/LICENSE.txt
         - if not exist %LIBRARY_BIN%\curl.exe exit 1  # [win]
+{% endif %}
 
 about:
   home: http://curl.haxx.se/
